@@ -2,9 +2,9 @@
 
 import React, { useState, useEffect } from "react";
 import { ScenarioSelector } from "@/components/ScenarioSelector";
-import { ScenarioDisplay } from "@/components/ScenarioDisplay";
 import { SessionSelector } from "@/components/SessionSelector";
 import { Chat } from "@/components/Chat";
+import { FloatingQuestions } from "@/components/FloatingQuestions";
 import {
   fetchScenarios,
   sendMessage,
@@ -16,6 +16,16 @@ import {
 } from "@/lib/api/client";
 import { Scenario, Message } from "@/types";
 import { Separator } from "@/components/ui/separator";
+import { useMediaQuery } from "@/hooks/use-media-query";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
+import { PanelLeft } from "lucide-react";
 
 interface Session {
   id: string;
@@ -34,10 +44,14 @@ export default function Home() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isDesktop = useMediaQuery("(min-width: 1024px)");
 
   // Session management
   const [sessions, setSessions] = useState<Session[]>([]);
   const [currentSessionId, setCurrentSessionId] = useState<string>("");
+
+  // Scenario collapse state
+  // const [isScenarioCollapsed, setIsScenarioCollapsed] = useState(false);
 
   // Initialize with sessions from backend
   useEffect(() => {
@@ -221,31 +235,89 @@ export default function Home() {
     setCurrentScenario(scenario);
   };
 
+  const SidebarContent = () => (
+    <>
+      <h1 className="text-2xl font-bold text-center">Settings</h1>
+      <Separator />
+
+      {/* Session Management */}
+      <SessionSelector
+        sessions={sessions}
+        currentSessionId={currentSessionId}
+        onCreateSession={handleCreateSession}
+        onSessionSelect={handleSelectSession}
+        onDeleteSession={handleDeleteSession}
+      />
+
+      <Separator />
+
+      {/* Scenario Selection */}
+      <ScenarioSelector
+        scenarios={scenarios}
+        selectedScenario={selectedScenario}
+        onScenarioSelect={setSelectedScenario}
+        onScenarioUpdate={setSelectedScenario}
+      />
+    </>
+  );
+
+  if (!isDesktop) {
+    return (
+      <div className="flex flex-col h-screen bg-black">
+        <header className="flex items-center justify-between p-4 border-b border-border">
+          <h1 className="text-lg font-bold text-white">Role-Play Chat</h1>
+          <Sheet>
+            <SheetTrigger asChild>
+              <Button variant="outline" size="icon">
+                <PanelLeft className="h-5 w-5 text-white" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent
+              side="left"
+              className="w-3/4 flex flex-col space-y-4 p-4 overflow-y-auto"
+            >
+              <SheetHeader>
+                <SheetTitle>Settings</SheetTitle>
+              </SheetHeader>
+              <SidebarContent />
+            </SheetContent>
+          </Sheet>
+        </header>
+
+        <main className="flex-1 flex flex-col overflow-hidden">
+          {error && (
+            <div className="p-4 bg-red-100 border-b border-red-300 text-red-700">
+              {error}
+            </div>
+          )}
+
+          <div className="flex-1 flex flex-col p-4 gap-4 overflow-y-auto">
+            {/* Chat Component */}
+            <div className="flex-1 flex flex-col min-h-0">
+              <Chat
+                messages={messages}
+                onSendMessage={handleSendMessage}
+                onClearChat={handleClearChat}
+                isLoading={isLoading}
+              />
+            </div>
+          </div>
+        </main>
+
+        {/* Floating Questions - positioned at bottom right */}
+        <FloatingQuestions
+          scenario={currentScenario}
+          onQuestionClick={handleQuestionClick}
+        />
+      </div>
+    );
+  }
+
   return (
     <div className="flex h-screen bg-black text-foreground">
       {/* Sidebar */}
-      <div className="w-1/4 flex flex-col space-y-4 p-4 border-r border-border overflow-y-auto">
-        <h1 className="text-2xl font-bold text-center">Settings</h1>
-        <Separator />
-
-        {/* Session Management */}
-        <SessionSelector
-          sessions={sessions}
-          currentSessionId={currentSessionId}
-          onCreateSession={handleCreateSession}
-          onSessionSelect={handleSelectSession}
-          onDeleteSession={handleDeleteSession}
-        />
-
-        <Separator />
-
-        {/* Scenario Selection */}
-        <ScenarioSelector
-          scenarios={scenarios}
-          selectedScenario={selectedScenario}
-          onScenarioSelect={setSelectedScenario}
-          onScenarioUpdate={setSelectedScenario}
-        />
+      <div className="w-1/4 flex flex-col space-y-4 p-4 border-r border-border overflow-y-auto bg-black">
+        <SidebarContent />
       </div>
 
       {/* Main Content */}
@@ -256,9 +328,9 @@ export default function Home() {
           </div>
         )}
 
-        <div className="flex-1 grid grid-cols-1 lg:grid-cols-5 gap-6 p-6 overflow-y-hidden">
+        <div className="flex-1 flex flex-col p-6 overflow-y-hidden">
           {/* Chat Component */}
-          <div className="lg:col-span-3 flex flex-col h-full">
+          <div className="flex-1 flex flex-col h-full">
             <Chat
               messages={messages}
               onSendMessage={handleSendMessage}
@@ -266,22 +338,14 @@ export default function Home() {
               isLoading={isLoading}
             />
           </div>
-
-          {/* Scenario Display */}
-          <div className="lg:col-span-2 flex flex-col h-full overflow-y-auto">
-            {currentScenario ? (
-              <ScenarioDisplay
-                scenario={currentScenario}
-                onQuestionClick={handleQuestionClick}
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <p className="text-muted-foreground">Select a scenario to start</p>
-              </div>
-            )}
-          </div>
         </div>
       </div>
+
+      {/* Floating Questions - positioned at bottom right */}
+      <FloatingQuestions
+        scenario={currentScenario}
+        onQuestionClick={handleQuestionClick}
+      />
     </div>
   );
 }
