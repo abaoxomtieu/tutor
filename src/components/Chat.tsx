@@ -18,6 +18,7 @@ interface ChatProps {
 export function Chat({ messages, onSendMessage, onClearChat, isLoading }: ChatProps) {
   const [inputValue, setInputValue] = React.useState('');
   const messagesEndRef = React.useRef<HTMLDivElement>(null);
+  const inputRef = React.useRef<HTMLInputElement>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -25,7 +26,10 @@ export function Chat({ messages, onSendMessage, onClearChat, isLoading }: ChatPr
 
   React.useEffect(() => {
     scrollToBottom();
-  }, [messages]);
+    if (!isLoading) {
+      inputRef.current?.focus();
+    }
+  }, [messages, isLoading]);
 
   const handleSend = () => {
     if (inputValue.trim() && !isLoading) {
@@ -124,6 +128,7 @@ export function Chat({ messages, onSendMessage, onClearChat, isLoading }: ChatPr
         <div className="p-4 border-t bg-background/50 flex-shrink-0">
           <div className="flex gap-2">
             <Input
+              ref={inputRef}
               value={inputValue}
               onChange={(e) => setInputValue(e.target.value)}
               onKeyPress={handleKeyPress}
