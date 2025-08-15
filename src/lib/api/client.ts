@@ -1,7 +1,7 @@
 import { Scenario, Message } from "@/types";
 
-const API_BASE_URL = "http://0.0.0.0:8000";
-// const API_BASE_URL = "https://abao77-run-code-api.hf.space";
+// const API_BASE_URL = "http://0.0.0.0:8000";
+const API_BASE_URL = "https://abao77-run-code-api.hf.space";
 
 // Generate UUID v4
 function generateUUID(): string {
